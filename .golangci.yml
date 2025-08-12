@@ -1,0 +1,112 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+output:
+  formats:
+    - format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters:
+  enable:
+    # Essential linters
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    
+    # Code quality
+    - gocritic
+    - gocyclo
+    - goimports
+    - misspell
+    - revive
+    - stylecheck
+    
+    # Security
+    - gosec
+    
+    # Performance
+    - prealloc
+
+linters-settings:
+  errcheck:
+    check-type-assertions: false
+    check-blank: false
+    exclude-functions:
+      - (*os.File).Close
+      - (*net/http.Response).Body.Close
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - unnamedResult
+      - hugeParam
+
+  gocyclo:
+    min-complexity: 20
+
+  goimports:
+    local-prefixes: boilerplate-go
+
+  gosec:
+    severity: medium
+    confidence: medium
+    excludes:
+      - G204 # Subprocess launched with function call as argument
+      - G304 # File path provided as taint input
+
+  revive:
+    rules:
+      - name: exported
+      - name: unreachable-code
+    
+  staticcheck:
+    checks: ["all"]
+
+issues:
+  exclude-rules:
+    # Test files
+    - path: _test\.go
+      linters:
+        - gocritic
+        - gocyclo
+        - gosec
+        - errcheck
+        
+    # Main files
+    - path: cmd/
+      linters:
+        - gocyclo
+        
+    # Migrations
+    - path: migrations/
+      linters:
+        - gocritic
+        
+    # Generated code
+    - source: "swagger"
+      linters:
+        - gocritic
+        
+    # Provider implementations (allow some duplication)
+    - path: internal/provider/
+      linters:
+        - gocritic
+        
+    # Repository implementations (similar patterns expected)
+    - path: internal/domain/repository/
+      linters:
+        - gocritic
+
+  exclude-use-default: false
+  max-issues-per-linter: 10
+  max-same-issues: 5

@@ -1,0 +1,430 @@
+basePath: /api/v1
+definitions:
+  entity.CreateOrderRequest:
+    properties:
+      amount:
+        type: number
+      currency:
+        type: string
+      order_id:
+        type: string
+      user_email:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - amount
+    - currency
+    - order_id
+    - user_email
+    - user_id
+    type: object
+  entity.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  entity.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/entity.User'
+    type: object
+  entity.OrderResponse:
+    properties:
+      amount:
+        type: number
+      currency:
+        type: string
+      order_id:
+        type: string
+      payment_id:
+        type: string
+      payment_intent_id:
+        type: string
+      processed_at:
+        type: string
+      status:
+        type: string
+      user:
+        $ref: '#/definitions/entity.User'
+    type: object
+  entity.PaymentIntent:
+    properties:
+      client_secret:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+    type: object
+  entity.PaymentIntentRequest:
+    properties:
+      amount:
+        type: number
+      currency:
+        type: string
+      customer_id:
+        type: string
+      description:
+        type: string
+    type: object
+  entity.PaymentStatus:
+    properties:
+      amount:
+        type: number
+      id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  entity.RefundOrderRequest:
+    properties:
+      payment_id:
+        type: string
+      reason:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - payment_id
+    - user_id
+    type: object
+  entity.RefundResponse:
+    properties:
+      amount:
+        type: number
+      created_at:
+        type: string
+      id:
+        type: string
+      payment_id:
+        type: string
+      status:
+        type: string
+    type: object
+  entity.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  entity.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: A professional Go microservice boilerplate with clean architecture
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Boilerplate API
+  version: "1.0"
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User login
+      tags:
+      - authentication
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with username, email and password
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Register a new user
+      tags:
+      - authentication
+  /api/v1/user/profile:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the authenticated user's profile information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.User'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - users
+  /orders:
+    post:
+      consumes:
+      - application/json
+      description: Process a new order with payment
+      parameters:
+      - description: Order request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.OrderResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Process a new order
+      tags:
+      - orders
+  /orders/payment-intent:
+    post:
+      consumes:
+      - application/json
+      description: Create a payment intent for client-side payment processing
+      parameters:
+      - description: Payment intent request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.PaymentIntentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.PaymentIntent'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create payment intent
+      tags:
+      - orders
+  /orders/payment/{payment_id}/status:
+    get:
+      consumes:
+      - application/json
+      description: Get the status of a payment by payment ID
+      parameters:
+      - description: Payment ID
+        in: path
+        name: payment_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.PaymentStatus'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get payment status
+      tags:
+      - orders
+  /orders/refund:
+    post:
+      consumes:
+      - application/json
+      description: Process a refund for an order
+      parameters:
+      - description: Refund request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.RefundOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.RefundResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Refund an order
+      tags:
+      - orders
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
